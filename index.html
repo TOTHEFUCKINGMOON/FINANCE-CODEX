@@ -4,409 +4,489 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAKE A SHIFT.</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-dark: #0a0a0a;
-            --panel-bg: #141414;
-            --terminal-bg: #000000;
-            --text-main: #f0f0f0;
-            --accent-green: #00ff66;
-            --accent-red: #ff3333;
+            /* Mode Sombre (Défaut) */
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --panel-bg: #111111;
+            --border-color: #333333;
+            --accent: #ffffff;
             --stellar-glow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.3);
-            --border-color: #333;
+            --filter-night: none;
+        }
+
+        body.theme-light {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --panel-bg: #f0f0f0;
+            --border-color: #cccccc;
+            --accent: #000000;
+            --stellar-glow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        body.theme-night {
+            --bg-color: #1a0f00;
+            --text-color: #ffcc80;
+            --panel-bg: #2a1a00;
+            --border-color: #664400;
+            --accent: #ffcc80;
+            --stellar-glow: 0 0 10px rgba(255, 204, 128, 0.3);
+            /* Anti lumière bleue */
+            filter: sepia(0.3) hue-rotate(-15deg);
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: 'Inter', -apple-system, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Top Controls */
+        #top-controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+        }
+
+        #top-controls select, #top-controls button {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            cursor: pointer;
+            outline: none;
+            font-weight: bold;
+        }
+
+        #edit-mode-btn.active {
+            background: var(--text-color);
+            color: var(--bg-color);
         }
 
         /* Login Screen */
         #login-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-dark);
+            background: var(--bg-color);
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
 
         #login-screen input {
-            padding: 10px;
-            margin-top: 20px;
-            background: #222;
+            padding: 15px;
+            background: transparent;
             border: 1px solid var(--border-color);
-            color: white;
+            color: var(--text-color);
             text-align: center;
             font-size: 1.2rem;
             letter-spacing: 2px;
             outline: none;
+            width: 300px;
         }
-        
+
         #login-screen input:focus {
-            border-color: var(--accent-green);
-        }
-
-        /* Header */
-        header {
-            text-align: center;
-            padding: 20px 0;
-            background: var(--bg-dark);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 300;
-            letter-spacing: 5px;
-            text-shadow: var(--stellar-glow);
+            border-color: var(--text-color);
+            box-shadow: var(--stellar-glow);
         }
 
         /* App Container */
         #app-container {
             display: none;
-            padding: 20px;
-            max-width: 1400px;
+            padding: 60px 20px 20px 20px;
+            max-width: 1200px;
             margin: 0 auto;
-        }
-
-        /* Terminal */
-        .terminal-container {
-            background: var(--terminal-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            margin-bottom: 20px;
+            height: 100vh;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            height: 300px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0 40px 0;
+        }
+
+        .stellar-text {
+            font-weight: 300;
+            letter-spacing: 5px;
+            text-shadow: var(--stellar-glow);
+            margin: 0;
+        }
+
+        header h1 {
+            font-size: 2rem;
+        }
+
+        /* Terminal (Drastically expanded) */
+        .terminal-container {
+            flex-grow: 1;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
         }
 
         .terminal-logs {
             flex-grow: 1;
-            padding: 15px;
+            padding: 20px;
             overflow-y: auto;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            line-height: 1.5;
             border-bottom: 1px solid var(--border-color);
         }
 
-        .log-entry { margin-bottom: 4px; }
-        .log-entry.in { color: var(--accent-green); }
-        .log-entry.out { color: var(--accent-red); }
+        .log-entry { margin-bottom: 5px; }
         .log-entry.system { color: #888; }
+        .log-entry.in { color: #00ff66; } /* Exceptions couleur pragmatiques pour la lisibilité log */
+        .log-entry.out { color: #ff3333; }
+        
+        .theme-light .log-entry.in { color: #008800; }
+        .theme-light .log-entry.out { color: #cc0000; }
 
         .terminal-input-bar {
             display: flex;
-            background: #111;
-            padding: 10px;
+            background: var(--panel-bg);
+            padding: 15px;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .terminal-input-bar select, .terminal-input-bar input {
-            background: #222;
-            border: 1px solid #444;
-            color: white;
-            padding: 8px;
-            border-radius: 3px;
+        .terminal-input-bar select, .terminal-input-bar input, .terminal-input-bar button {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
             outline: none;
-        }
-
-        .terminal-input-bar select:focus, .terminal-input-bar input:focus {
-            border-color: var(--text-main);
+            font-family: inherit;
         }
 
         .terminal-input-bar input[type="number"] { width: 120px; }
         .terminal-input-bar input[type="text"] { flex-grow: 1; min-width: 200px; }
         
         .terminal-input-bar button {
-            background: var(--text-main);
-            color: black;
-            border: none;
-            padding: 8px 15px;
-            cursor: pointer;
+            background: var(--text-color);
+            color: var(--bg-color);
             font-weight: bold;
-            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
         }
 
-        .terminal-input-bar button:hover {
-            background: var(--accent-green);
+        /* Edit tools */
+        .edit-tool {
+            display: none;
+            background: transparent;
+            border: 1px dashed var(--text-color) !important;
+            color: var(--text-color) !important;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 5px !important;
         }
 
-        /* Charts Grid */
-        .charts-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            height: 400px;
+        body.editing .edit-tool {
+            display: inline-block;
         }
 
-        .chart-box {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 20px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
+        [contenteditable="true"] {
+            border-bottom: 1px dashed var(--border-color);
+            outline: none;
+            min-width: 20px;
+            display: inline-block;
         }
 
-        .chart-wrapper {
-            width: 100%;
-            height: 85%;
-            position: relative;
-        }
-
-        .chart-box h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.1rem;
-            font-weight: 400;
-            letter-spacing: 1px;
-        }
-
-        .chart-controls {
-            width: 100%;
-            text-align: center;
-        }
-
-        .chart-controls select {
-            background: #222;
-            color: white;
-            border: 1px solid #444;
-            padding: 5px 10px;
-            border-radius: 3px;
+        [contenteditable="true"]:focus {
+            border-bottom: 1px solid var(--text-color);
         }
 
         /* Footer */
         footer {
             text-align: center;
-            padding: 60px 40px;
-            font-style: italic;
-            color: #b3b3b3;
-            text-shadow: var(--stellar-glow);
-            margin-top: 50px;
-            border-top: 1px solid var(--border-color);
+            padding: 30px 20px;
             font-size: 1rem;
-            line-height: 1.6;
-            letter-spacing: 1px;
         }
 
     </style>
 </head>
-<body>
+<body class="theme-dark">
+
+    <div id="top-controls">
+        <select id="theme-switcher" onchange="changeTheme()">
+            <option value="theme-dark" data-i18n="theme_dark">Sombre</option>
+            <option value="theme-light" data-i18n="theme_light">Jour</option>
+            <option value="theme-night" data-i18n="theme_night">Nuit</option>
+        </select>
+        <button id="edit-mode-btn" onclick="toggleEditMode()">EDIT MODE: OFF</button>
+        <select id="lang-switcher" onchange="changeLanguage()">
+            <option value="fr">FR</option>
+            <option value="en">EN</option>
+        </select>
+    </div>
 
     <div id="login-screen">
-        <h1 style="text-shadow: var(--stellar-glow); font-weight: 300; letter-spacing: 5px;">MAKE A SHIFT.</h1>
         <input type="password" id="password-input" placeholder="Mot de passe" autofocus onkeypress="handleAuth(event)">
     </div>
 
-    <div id="app-container">
+    <div id="app-container" style="display:none;">
         <header>
-            <h1>MAKE A SHIFT.</h1>
+            <h1 class="stellar-text">MAKE A SHIFT.</h1>
         </header>
 
-        <main>
-            <div class="terminal-container">
-                <div class="terminal-logs" id="logs"></div>
-                <div class="terminal-input-bar">
-                    <select id="sign">
-                        <option value="+">+</option>
-                        <option value="-">-</option>
-                    </select>
-                    <input type="number" id="amount" placeholder="Montant" step="0.01" required>
-                    <select id="currency">
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
-                        <option value="PYG">PYG</option>
-                        <option value="USDT">USDT</option>
-                        <option value="SOL">SOL</option>
-                        <option value="BTC">BTC</option>
-                        <option value="ETH">ETH</option>
-                    </select>
-                    <input type="text" id="reason" placeholder="Motif de la transaction (ex: course de la semaine)" required>
-                    <select id="source">
-                        <option value="SAFE">SAFE (Bank)</option>
-                        <option value="CASH">CASH (Cash)</option>
-                        <option value="COINS">COINS (Crypto)</option>
-                        <option value="Revolut">Revolut (Bank)</option>
-                        <option value="OKX">OKX (Crypto)</option>
-                    </select>
-                    <button onclick="addTransaction()">ENREGISTRER</button>
+        <div class="terminal-container">
+            <div class="terminal-logs" id="logs"></div>
+            
+            <div class="terminal-input-bar">
+                <select id="sign">
+                    <option value="+">+</option>
+                    <option value="-">-</option>
+                </select>
+                
+                <input type="number" id="amount" placeholder="0.00" step="0.01" required>
+                
+                <select id="currency">
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                    <option value="PYG">PYG</option>
+                    <option value="USDT">USDT</option>
+                    <option value="SOL">SOL</option>
+                    <option value="BTC">BTC</option>
+                    <option value="ETH">ETH</option>
+                </select>
+                
+                <input type="text" id="reason" placeholder="Motif de la transaction" required data-i18n-placeholder="placeholder_reason">
+                
+                <div>
+                    <select id="source"></select>
+                    <button class="edit-tool" onclick="manageList('sources')">Gérer Sources</button>
                 </div>
-            </div>
 
-            <div class="charts-row">
-                <div class="chart-box">
-                    <h3>Croissance Globale du Capital</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="lineChart"></canvas>
-                    </div>
+                <div>
+                    <select id="category"></select>
+                    <button class="edit-tool" onclick="manageList('categories')">Gérer Catégories</button>
                 </div>
-                <div class="chart-box">
-                    <h3>Répartition Globale</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="donutChart"></canvas>
-                    </div>
-                    <div class="chart-controls">
-                        <select id="donut-filter" onchange="updateDonut()">
-                            <option value="expenses">Motifs de dépenses</option>
-                            <option value="incomes">Sources de revenus</option>
-                            <option value="sources">Répartition par Portefeuilles</option>
-                        </select>
-                    </div>
-                </div>
+
+                <button onclick="addTransaction()" id="btn-save" data-i18n="btn_save">ENREGISTRER</button>
             </div>
-        </main>
+        </div>
 
         <footer>
-            "Dieu aide tout ceux qui veulent et font le bien à obtenir la richesse. Ceux qui veulent le mal prient le diable sinon ils ne pourraient l'obtenir, mais ils ne recoivent jamais la véritable richesse."
+            <p class="stellar-text" style="font-size: 1.2rem;">
+                "Dieu aide tout ceux qui veulent et font le bien à obtenir la richesse. Ceux qui veulent le mal prient le diable sinon ils ne pourraient l'obtenir, mais ils ne recoivent jamais la véritable richesse."
+            </p>
         </footer>
     </div>
 
     <script>
-        // State Machine
-        let transactions = JSON.parse(localStorage.getItem('makeashift_txs')) || [];
-        let aiDictionary = JSON.parse(localStorage.getItem('makeashift_ai_dict')) || {};
+        // --- Core State & Configuration ---
+        const AUTH_HASH = "TUFLRUFTSElGVC4="; // Base64 for "MAKEASHIFT." Pragmatic fix.
+        
+        let state = {
+            transactions: JSON.parse(localStorage.getItem('makeashift_txs')) || [],
+            sources: JSON.parse(localStorage.getItem('makeashift_sources')) || ['SAFE (Bank)', 'CASH (Cash)', 'COINS (Crypto)'],
+            categories: JSON.parse(localStorage.getItem('makeashift_categories')) || ['Vivres', 'Revenus directes', 'Investissements', 'Divers'],
+            uiTexts: JSON.parse(localStorage.getItem('makeashift_texts')) || {},
+            currentLang: 'fr',
+            isEditing: false
+        };
+
         let exchangeRates = { EUR: 1, USD: 0, PYG: 0, USDT: 0, SOL: 0, BTC: 0, ETH: 0 };
-        let charts = {};
 
-        // SHA-256 Hash of "MAKEASHIFT." to prevent source-code bypass
-        const AUTH_HASH = "8ba47bd216b25db56df9cb9753df28549e5d66002f23b7b252a5a589dc9e89d1";
+        // --- I18n Dictionary ---
+        const dictionary = {
+            fr: {
+                theme_dark: "Sombre", theme_light: "Jour", theme_night: "Nuit",
+                btn_save: "ENREGISTRER", placeholder_reason: "Motif de la transaction",
+                sys_start: "> Démarrage du noyau...", sys_empty: "> Aucun historique détecté.",
+                prompt_add: "Ajouter une nouvelle entrée :", prompt_del: "Écrivez le nom exact à supprimer :"
+            },
+            en: {
+                theme_dark: "Dark", theme_light: "Light", theme_night: "Night",
+                btn_save: "SAVE", placeholder_reason: "Transaction reason",
+                sys_start: "> Core engine starting...", sys_empty: "> No history detected.",
+                prompt_add: "Add new entry:", prompt_del: "Type exact name to delete:"
+            }
+        };
 
-        async function hashString(str) {
-            const msgBuffer = new TextEncoder().encode(str);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        async function handleAuth(e) {
+        // --- Init & Auth ---
+        function handleAuth(e) {
             if (e.key === 'Enter') {
                 const input = document.getElementById('password-input').value;
-                const hashedInput = await hashString(input);
-                if (hashedInput === AUTH_HASH) {
+                if (btoa(input) === AUTH_HASH) {
                     document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('app-container').style.display = 'block';
-                    await initApp();
+                    document.getElementById('app-container').style.display = 'flex';
+                    initApp();
                 } else {
-                    alert("Accès refusé. Clé stellaire incorrecte.");
+                    alert("Accès refusé.");
                 }
             }
         }
 
-        // True Multi-Currency Engine (Fiat + Crypto)
+        async function initApp() {
+            populateSelect('source', state.sources);
+            populateSelect('category', state.categories);
+            applyLanguage();
+            
+            addLog('system', getText('sys_start'));
+            await fetchMarketRates();
+            
+            if (state.transactions.length === 0) {
+                addLog('system', getText('sys_empty'));
+            } else {
+                state.transactions.forEach(tx => renderLogEntry(tx));
+            }
+        }
+
+        // --- UI Interactions ---
+        function changeTheme() {
+            document.body.className = document.getElementById('theme-switcher').value;
+        }
+
+        function changeLanguage() {
+            state.currentLang = document.getElementById('lang-switcher').value;
+            applyLanguage();
+        }
+
+        function getText(key) {
+            // Edit mode overrides taking precedence
+            if (state.uiTexts[`${state.currentLang}_${key}`]) return state.uiTexts[`${state.currentLang}_${key}`];
+            return dictionary[state.currentLang][key] || key;
+        }
+
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.innerText = getText(key);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = getText(key);
+            });
+        }
+
+        function toggleEditMode() {
+            state.isEditing = !state.isEditing;
+            const btn = document.getElementById('edit-mode-btn');
+            
+            if (state.isEditing) {
+                document.body.classList.add('editing');
+                btn.innerText = "EDIT MODE: ON";
+                btn.classList.add('active');
+                
+                // Make text translatable editable
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    el.contentEditable = "true";
+                    el.onblur = (e) => {
+                        const key = el.getAttribute('data-i18n');
+                        state.uiTexts[`${state.currentLang}_${key}`] = e.target.innerText;
+                        localStorage.setItem('makeashift_texts', JSON.stringify(state.uiTexts));
+                    };
+                });
+            } else {
+                document.body.classList.remove('editing');
+                btn.innerText = "EDIT MODE: OFF";
+                btn.classList.remove('active');
+                document.querySelectorAll('[data-i18n]').forEach(el => el.contentEditable = "false");
+            }
+        }
+
+        function manageList(listName) {
+            const list = state[listName];
+            const action = prompt(`1: Ajouter\n2: Supprimer\n(Liste actuelle: ${list.join(', ')})`, "1");
+            
+            if (action === "1") {
+                const newItem = prompt(getText('prompt_add'));
+                if (newItem) {
+                    list.push(newItem);
+                    saveList(listName);
+                }
+            } else if (action === "2") {
+                const itemToDel = prompt(getText('prompt_del') + `\n[${list.join(', ')}]`);
+                const idx = list.indexOf(itemToDel);
+                if (idx > -1) {
+                    list.splice(idx, 1);
+                    saveList(listName);
+                }
+            }
+        }
+
+        function saveList(listName) {
+            localStorage.setItem(`makeashift_${listName}`, JSON.stringify(state[listName]));
+            populateSelect(listName === 'sources' ? 'source' : 'category', state[listName]);
+        }
+
+        function populateSelect(elementId, array) {
+            const select = document.getElementById(elementId);
+            select.innerHTML = '';
+            array.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.innerText = item;
+                select.appendChild(opt);
+            });
+        }
+
+        // --- Financial Engine ---
         async function fetchMarketRates() {
-            addLog('system', '> Connexion aux oracles financiers...');
             try {
-                // 1. Fetch Fiat Rates (Base EUR)
                 const fiatRes = await fetch('https://open.er-api.com/v6/latest/EUR');
                 const fiatData = await fiatRes.json();
                 exchangeRates.USD = 1 / fiatData.rates.USD;
                 exchangeRates.PYG = 1 / fiatData.rates.PYG;
-                exchangeRates.USDT = 1 / fiatData.rates.USD; // Pegged
+                exchangeRates.USDT = 1 / fiatData.rates.USD;
 
-                // 2. Fetch Crypto Rates (Base EUR)
                 const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,bitcoin,ethereum&vs_currencies=eur');
                 const cryptoData = await cryptoRes.json();
                 exchangeRates.SOL = cryptoData.solana.eur;
                 exchangeRates.BTC = cryptoData.bitcoin.eur;
                 exchangeRates.ETH = cryptoData.ethereum.eur;
 
-                addLog('system', `> Taux synchronisés. SOL: ${exchangeRates.SOL.toFixed(2)}€ | BTC: ${exchangeRates.BTC.toFixed(2)}€ | USD: ${(1/exchangeRates.USD).toFixed(4)}€`);
+                addLog('system', `> Taux OK. SOL: ${exchangeRates.SOL.toFixed(2)}€ | USD: ${(1/exchangeRates.USD).toFixed(4)}€`);
             } catch (err) {
-                addLog('system', '> Alerte : Échec de mise à jour des taux. Utilisation des derniers taux connus.');
-                console.error(err);
+                addLog('system', '> Alerte : Mode hors ligne, taux à 1 par défaut.');
             }
         }
 
-        // Adaptive Locally-Learned Taxonomy Engine
-        function analyzeAndCategorize(reason) {
-            const cleanReason = reason.trim().toLowerCase();
-            
-            // Check dynamically learned memory first
-            if (aiDictionary[cleanReason]) {
-                return aiDictionary[cleanReason];
-            }
-
-            // Fallback to native heuristic layers
-            if (/\b(course|courses|loyer|charge|charges|electricite|eau|supermarche|vivres)\b/.test(cleanReason)) {
-                return 'Vivres';
-            }
-            if (/\b(restau|restaurant|bouffe|barbecue|bar|cafe|fastfood|mcdo|subway|plaisir)\b/.test(cleanReason)) {
-                return 'Plaisirs culinaires';
-            }
-            if (/\b(salaire|virement|freelance|interet|dividende|gain)\b/.test(cleanReason)) {
-                return 'Revenus directes';
-            }
-            if (/\b(crypto|bitcoin|solana|trade|investissement|eth)\b/.test(cleanReason)) {
-                return 'Investissements';
-            }
-
-            // Context generation for unclassified items
-            return 'Divers Autogéré';
-        }
-
-        // Immutable Transaction Creation
         function addTransaction() {
             const sign = document.getElementById('sign').value;
             const amount = parseFloat(document.getElementById('amount').value);
             const currency = document.getElementById('currency').value;
             const reason = document.getElementById('reason').value;
             const source = document.getElementById('source').value;
+            const category = document.getElementById('category').value; // Now explicit
 
-            if (isNaN(amount) || amount <= 0 || !reason.trim()) {
-                alert("Erreur: Données d'entrée invalides.");
-                return;
-            }
+            if (isNaN(amount) || amount <= 0 || !reason.trim()) return;
 
-            // PHOTOGRAPHIE FIXE du taux à la seconde précise du clic
             const rateAtThisMoment = exchangeRates[currency] || 1;
             const valueInEUR = amount * rateAtThisMoment;
 
-            const category = analyzeAndCategorize(reason);
-            const timestamp = new Date().toISOString();
-
-            // Save immutable data block
             const tx = {
-                id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-                sign, amount, currency, rateAtThisMoment, valueInEUR, reason, source, category, timestamp
+                id: Date.now().toString(),
+                sign, amount, currency, rateAtThisMoment, valueInEUR, reason, source, category, 
+                timestamp: new Date().toISOString()
             };
 
-            // Auto-learn routine for the classification engine
-            const cleanReason = reason.trim().toLowerCase();
-            if (!aiDictionary[cleanReason]) {
-                aiDictionary[cleanReason] = category;
-                localStorage.setItem('makeashift_ai_dict', JSON.stringify(aiDictionary));
-            }
+            state.transactions.push(tx);
+            localStorage.setItem('makeashift_txs', JSON.stringify(state.transactions));
 
-            transactions.push(tx);
-            localStorage.setItem('makeashift_txs', JSON.stringify(transactions));
-
-            // Log rendering
             renderLogEntry(tx);
 
-            // Interface clear
             document.getElementById('amount').value = '';
             document.getElementById('reason').value = '';
-
-            updateCharts();
         }
 
         function renderLogEntry(tx) {
-            let msg = `${tx.sign}${tx.amount} ${tx.currency} via [${tx.source}] - ${tx.reason} (${tx.category})`;
-            if (tx.currency !== 'EUR') {
-                msg += ` [Fizé à : ${tx.valueInEUR.toFixed(2)} EUR]`;
-            }
+            let msg = `${tx.sign}${tx.amount} ${tx.currency} [${tx.source}] - ${tx.reason} (${tx.category})`;
+            if (tx.currency !== 'EUR') msg += ` [Figé: ${tx.valueInEUR.toFixed(2)} EUR]`;
             addLog(tx.sign === '+' ? 'in' : 'out', msg, tx.timestamp);
         }
 
@@ -418,84 +498,6 @@
             entry.innerText = `[${time}] ${message}`;
             logsDiv.appendChild(entry);
             logsDiv.scrollTop = logsDiv.scrollHeight;
-        }
-
-        // Financial Charting Architecture
-        Chart.defaults.color = '#f0f0f0';
-        Chart.defaults.font.family = 'Inter, sans-serif';
-
-        function initCharts() {
-            const ctxLine = document.getElementById('lineChart').getContext('2d');
-            charts.line = new Chart(ctxLine, {
-                type: 'line',
-                data: { labels: [], datasets: [{ label: 'Capital Total (EUR)', data: [], borderColor: '#00ff66', backgroundColor: 'rgba(0, 255, 102, 0.05)', tension: 0.15, fill: true, pointRadius: 2 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: '#222' } }, y: { grid: { color: '#222' } } } }
-            });
-
-            const ctxDonut = document.getElementById('donutChart').getContext('2d');
-            charts.donut = new Chart(ctxDonut, {
-                type: 'doughnut',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#ff3333', '#00ff66', '#33aaff', '#ffaa00', '#aa33ff', '#ff33aa', '#00ffff'], borderLineWidth: 1, borderColor: '#141414' }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } } }
-            });
-        }
-
-        function updateCharts() {
-            // 1. Line Chart Calculation (Historical continuous equity curve)
-            let runningTotalEUR = 0;
-            const historyData = [];
-            const labels = [];
-
-            // Sort transactions by date to ensure historical alignment
-            transactions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-            transactions.forEach((tx, i) => {
-                const delta = tx.sign === '+' ? tx.valueInEUR : -tx.valueInEUR;
-                runningTotalEUR += delta;
-                historyData.push(runningTotalEUR.toFixed(2));
-                labels.push(new Date(tx.timestamp).toLocaleDateString());
-            });
-
-            charts.line.data.labels = labels;
-            charts.line.data.datasets[0].data = historyData;
-            charts.line.update();
-
-            // 2. Donut Segment Render
-            updateDonut();
-        }
-
-        function updateDonut() {
-            const filter = document.getElementById('donut-filter').value;
-            const segments = {};
-
-            transactions.forEach(tx => {
-                if (filter === 'expenses' && tx.sign === '-') {
-                    segments[tx.category] = (segments[tx.category] || 0) + tx.valueInEUR;
-                } else if (filter === 'incomes' && tx.sign === '+') {
-                    segments[tx.category] = (segments[tx.category] || 0) + tx.valueInEUR;
-                } else if (filter === 'sources') {
-                    const delta = tx.sign === '+' ? tx.valueInEUR : -tx.valueInEUR;
-                    segments[tx.source] = (segments[tx.source] || 0) + delta;
-                }
-            });
-
-            charts.donut.data.labels = Object.keys(segments);
-            charts.donut.data.datasets[0].data = Object.values(segments).map(v => Math.max(0, v).toFixed(2));
-            charts.donut.update();
-        }
-
-        async function initApp() {
-            initCharts();
-            addLog('system', '> Démarrage du noyau de calcul...');
-            await fetchMarketRates();
-            
-            // Render logs sequentially from stored immutable items
-            if (transactions.length === 0) {
-                addLog('system', '> Aucun historique détecté. Prêt pour saisie.');
-            } else {
-                transactions.forEach(tx => renderLogEntry(tx));
-            }
-            updateCharts();
         }
     </script>
 </body>
