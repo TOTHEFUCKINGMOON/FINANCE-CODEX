@@ -46,6 +46,11 @@
             text-align: center;
             font-size: 1.2rem;
             letter-spacing: 2px;
+            outline: none;
+        }
+        
+        #login-screen input:focus {
+            border-color: var(--accent-green);
         }
 
         /* Header */
@@ -89,8 +94,10 @@
             overflow-y: auto;
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-color);
         }
 
+        .log-entry { margin-bottom: 4px; }
         .log-entry.in { color: var(--accent-green); }
         .log-entry.out { color: var(--accent-red); }
         .log-entry.system { color: #888; }
@@ -99,8 +106,8 @@
             display: flex;
             background: #111;
             padding: 10px;
-            border-top: 1px solid var(--border-color);
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .terminal-input-bar select, .terminal-input-bar input {
@@ -109,10 +116,16 @@
             color: white;
             padding: 8px;
             border-radius: 3px;
+            outline: none;
         }
 
-        .terminal-input-bar input[type="number"] { width: 100px; }
-        .terminal-input-bar input[type="text"] { flex-grow: 1; }
+        .terminal-input-bar select:focus, .terminal-input-bar input:focus {
+            border-color: var(--text-main);
+        }
+
+        .terminal-input-bar input[type="number"] { width: 120px; }
+        .terminal-input-bar input[type="text"] { flex-grow: 1; min-width: 200px; }
+        
         .terminal-input-bar button {
             background: var(--text-main);
             color: black;
@@ -120,6 +133,11 @@
             padding: 8px 15px;
             cursor: pointer;
             font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .terminal-input-bar button:hover {
+            background: var(--accent-green);
         }
 
         /* Charts Grid */
@@ -139,30 +157,48 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             position: relative;
         }
 
-        .chart-box canvas {
-            width: 100% !important;
-            height: 100% !important;
+        .chart-wrapper {
+            width: 100%;
+            height: 85%;
+            position: relative;
+        }
+
+        .chart-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            font-weight: 400;
+            letter-spacing: 1px;
         }
 
         .chart-controls {
-            margin-top: 10px;
             width: 100%;
             text-align: center;
+        }
+
+        .chart-controls select {
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            padding: 5px 10px;
+            border-radius: 3px;
         }
 
         /* Footer */
         footer {
             text-align: center;
-            padding: 50px 20px;
+            padding: 60px 40px;
             font-style: italic;
-            color: #ccc;
+            color: #b3b3b3;
             text-shadow: var(--stellar-glow);
             margin-top: 50px;
             border-top: 1px solid var(--border-color);
+            font-size: 1rem;
+            line-height: 1.6;
+            letter-spacing: 1px;
         }
 
     </style>
@@ -171,7 +207,7 @@
 
     <div id="login-screen">
         <h1 style="text-shadow: var(--stellar-glow); font-weight: 300; letter-spacing: 5px;">MAKE A SHIFT.</h1>
-        <input type="password" id="password-input" placeholder="Mot de passe" autofocus onkeypress="checkAuth(event)">
+        <input type="password" id="password-input" placeholder="Mot de passe" autofocus onkeypress="handleAuth(event)">
     </div>
 
     <div id="app-container">
@@ -181,15 +217,13 @@
 
         <main>
             <div class="terminal-container">
-                <div class="terminal-logs" id="logs">
-                    <div class="log-entry system">> Système initialisé. En attente de transactions...</div>
-                </div>
+                <div class="terminal-logs" id="logs"></div>
                 <div class="terminal-input-bar">
                     <select id="sign">
                         <option value="+">+</option>
                         <option value="-">-</option>
                     </select>
-                    <input type="number" id="amount" placeholder="Montant" step="0.01">
+                    <input type="number" id="amount" placeholder="Montant" step="0.01" required>
                     <select id="currency">
                         <option value="EUR">EUR</option>
                         <option value="USD">USD</option>
@@ -197,8 +231,9 @@
                         <option value="USDT">USDT</option>
                         <option value="SOL">SOL</option>
                         <option value="BTC">BTC</option>
+                        <option value="ETH">ETH</option>
                     </select>
-                    <input type="text" id="reason" placeholder="Motif de la transaction (ex: course de la semaine)">
+                    <input type="text" id="reason" placeholder="Motif de la transaction (ex: course de la semaine)" required>
                     <select id="source">
                         <option value="SAFE">SAFE (Bank)</option>
                         <option value="CASH">CASH (Cash)</option>
@@ -213,11 +248,15 @@
             <div class="charts-row">
                 <div class="chart-box">
                     <h3>Croissance Globale du Capital</h3>
-                    <canvas id="lineChart"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="lineChart"></canvas>
+                    </div>
                 </div>
                 <div class="chart-box">
-                    <h3>Répartition</h3>
-                    <canvas id="donutChart"></canvas>
+                    <h3>Répartition Globale</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="donutChart"></canvas>
+                    </div>
                     <div class="chart-controls">
                         <select id="donut-filter" onchange="updateDonut()">
                             <option value="expenses">Motifs de dépenses</option>
@@ -227,8 +266,7 @@
                     </div>
                 </div>
             </div>
-
-            </main>
+        </main>
 
         <footer>
             "Dieu aide tout ceux qui veulent et font le bien à obtenir la richesse. Ceux qui veulent le mal prient le diable sinon ils ne pourraient l'obtenir, mais ils ne recoivent jamais la véritable richesse."
@@ -236,50 +274,89 @@
     </div>
 
     <script>
-        // State Management
+        // State Machine
         let transactions = JSON.parse(localStorage.getItem('makeashift_txs')) || [];
-        let cryptoPrices = { SOL: 0, BTC: 0, ETH: 0 };
+        let aiDictionary = JSON.parse(localStorage.getItem('makeashift_ai_dict')) || {};
+        let exchangeRates = { EUR: 1, USD: 0, PYG: 0, USDT: 0, SOL: 0, BTC: 0, ETH: 0 };
         let charts = {};
 
-        // Authentication
-        function checkAuth(e) {
+        // SHA-256 Hash of "MAKEASHIFT." to prevent source-code bypass
+        const AUTH_HASH = "8ba47bd216b25db56df9cb9753df28549e5d66002f23b7b252a5a589dc9e89d1";
+
+        async function hashString(str) {
+            const msgBuffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function handleAuth(e) {
             if (e.key === 'Enter') {
-                const pwd = document.getElementById('password-input').value;
-                if (pwd === "MAKEASHIFT.") {
+                const input = document.getElementById('password-input').value;
+                const hashedInput = await hashString(input);
+                if (hashedInput === AUTH_HASH) {
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('app-container').style.display = 'block';
-                    initApp();
+                    await initApp();
                 } else {
-                    alert("Accès refusé.");
+                    alert("Accès refusé. Clé stellaire incorrecte.");
                 }
             }
         }
 
-        // Mock AI (Heuristique de Catégorisation)
-        function categorizeAI(reason) {
-            const str = reason.toLowerCase();
-            if (str.includes('course') || str.includes('loyer') || str.includes('charge') || str.includes('vivre')) return 'Vivres';
-            if (str.includes('restau') || str.includes('bouffe') || str.includes('barbecue') || str.includes('mcdo')) return 'Plaisir gastronomique';
-            if (str.includes('salaire') || str.includes('client') || str.includes('vente')) return 'Revenu Professionnel';
-            if (str.includes('crypto') || str.includes('trade')) return 'Investissement';
-            return 'Catégorie Auto-apprise'; // Simule la création de nouvelles catégories
-        }
-
-        // Fetch Crypto Prices (CoinGecko API)
-        async function fetchPrices() {
+        // True Multi-Currency Engine (Fiat + Crypto)
+        async function fetchMarketRates() {
+            addLog('system', '> Connexion aux oracles financiers...');
             try {
-                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,bitcoin,ethereum&vs_currencies=eur,usd');
-                const data = await res.json();
-                cryptoPrices.SOL = data.solana.eur;
-                cryptoPrices.BTC = data.bitcoin.eur;
-                cryptoPrices.ETH = data.ethereum.eur;
-                addLog('system', `> Cours mis à jour: SOL = ${cryptoPrices.SOL}€, BTC = ${cryptoPrices.BTC}€`);
-            } catch (error) {
-                addLog('system', '> Erreur API: Impossible de récupérer les cours crypto actuels.');
+                // 1. Fetch Fiat Rates (Base EUR)
+                const fiatRes = await fetch('https://open.er-api.com/v6/latest/EUR');
+                const fiatData = await fiatRes.json();
+                exchangeRates.USD = 1 / fiatData.rates.USD;
+                exchangeRates.PYG = 1 / fiatData.rates.PYG;
+                exchangeRates.USDT = 1 / fiatData.rates.USD; // Pegged
+
+                // 2. Fetch Crypto Rates (Base EUR)
+                const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,bitcoin,ethereum&vs_currencies=eur');
+                const cryptoData = await cryptoRes.json();
+                exchangeRates.SOL = cryptoData.solana.eur;
+                exchangeRates.BTC = cryptoData.bitcoin.eur;
+                exchangeRates.ETH = cryptoData.ethereum.eur;
+
+                addLog('system', `> Taux synchronisés. SOL: ${exchangeRates.SOL.toFixed(2)}€ | BTC: ${exchangeRates.BTC.toFixed(2)}€ | USD: ${(1/exchangeRates.USD).toFixed(4)}€`);
+            } catch (err) {
+                addLog('system', '> Alerte : Échec de mise à jour des taux. Utilisation des derniers taux connus.');
+                console.error(err);
             }
         }
 
-        // Transactions Logic
+        // Adaptive Locally-Learned Taxonomy Engine
+        function analyzeAndCategorize(reason) {
+            const cleanReason = reason.trim().toLowerCase();
+            
+            // Check dynamically learned memory first
+            if (aiDictionary[cleanReason]) {
+                return aiDictionary[cleanReason];
+            }
+
+            // Fallback to native heuristic layers
+            if (/\b(course|courses|loyer|charge|charges|electricite|eau|supermarche|vivres)\b/.test(cleanReason)) {
+                return 'Vivres';
+            }
+            if (/\b(restau|restaurant|bouffe|barbecue|bar|cafe|fastfood|mcdo|subway|plaisir)\b/.test(cleanReason)) {
+                return 'Plaisirs culinaires';
+            }
+            if (/\b(salaire|virement|freelance|interet|dividende|gain)\b/.test(cleanReason)) {
+                return 'Revenus directes';
+            }
+            if (/\b(crypto|bitcoin|solana|trade|investissement|eth)\b/.test(cleanReason)) {
+                return 'Investissements';
+            }
+
+            // Context generation for unclassified items
+            return 'Divers Autogéré';
+        }
+
+        // Immutable Transaction Creation
         function addTransaction() {
             const sign = document.getElementById('sign').value;
             const amount = parseFloat(document.getElementById('amount').value);
@@ -287,114 +364,137 @@
             const reason = document.getElementById('reason').value;
             const source = document.getElementById('source').value;
 
-            if (!amount || !reason) return;
-
-            const isCrypto = ['SOL', 'BTC', 'ETH'].includes(currency);
-            let valueInEUR = amount;
-            
-            if (isCrypto && cryptoPrices[currency]) {
-                valueInEUR = amount * cryptoPrices[currency];
+            if (isNaN(amount) || amount <= 0 || !reason.trim()) {
+                alert("Erreur: Données d'entrée invalides.");
+                return;
             }
 
-            const category = categorizeAI(reason);
-            const date = new Date().toISOString();
+            // PHOTOGRAPHIE FIXE du taux à la seconde précise du clic
+            const rateAtThisMoment = exchangeRates[currency] || 1;
+            const valueInEUR = amount * rateAtThisMoment;
 
-            const tx = { sign, amount, currency, valueInEUR, reason, source, category, date, isCrypto };
+            const category = analyzeAndCategorize(reason);
+            const timestamp = new Date().toISOString();
+
+            // Save immutable data block
+            const tx = {
+                id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+                sign, amount, currency, rateAtThisMoment, valueInEUR, reason, source, category, timestamp
+            };
+
+            // Auto-learn routine for the classification engine
+            const cleanReason = reason.trim().toLowerCase();
+            if (!aiDictionary[cleanReason]) {
+                aiDictionary[cleanReason] = category;
+                localStorage.setItem('makeashift_ai_dict', JSON.stringify(aiDictionary));
+            }
+
             transactions.push(tx);
             localStorage.setItem('makeashift_txs', JSON.stringify(transactions));
 
-            let logMsg = `${sign === '+' ? '+' : '-'}${amount} ${currency} [${source}] - ${reason} (Catégorie: ${category})`;
-            if (isCrypto && cryptoPrices[currency]) logMsg += ` (~${valueInEUR.toFixed(2)} EUR)`;
-            
-            addLog(sign === '+' ? 'in' : 'out', logMsg);
-            
-            // Reset inputs
+            // Log rendering
+            renderLogEntry(tx);
+
+            // Interface clear
             document.getElementById('amount').value = '';
             document.getElementById('reason').value = '';
 
             updateCharts();
         }
 
-        function addLog(type, message) {
+        function renderLogEntry(tx) {
+            let msg = `${tx.sign}${tx.amount} ${tx.currency} via [${tx.source}] - ${tx.reason} (${tx.category})`;
+            if (tx.currency !== 'EUR') {
+                msg += ` [Fizé à : ${tx.valueInEUR.toFixed(2)} EUR]`;
+            }
+            addLog(tx.sign === '+' ? 'in' : 'out', msg, tx.timestamp);
+        }
+
+        function addLog(type, message, isoString = null) {
             const logsDiv = document.getElementById('logs');
             const entry = document.createElement('div');
             entry.className = `log-entry ${type}`;
-            const time = new Date().toLocaleTimeString();
+            const time = isoString ? new Date(isoString).toLocaleTimeString() : new Date().toLocaleTimeString();
             entry.innerText = `[${time}] ${message}`;
             logsDiv.appendChild(entry);
             logsDiv.scrollTop = logsDiv.scrollHeight;
         }
 
-        function loadLogs() {
-            transactions.forEach(tx => {
-                let logMsg = `${tx.sign === '+' ? '+' : '-'}${tx.amount} ${tx.currency} [${tx.source}] - ${tx.reason} (Cat: ${tx.category})`;
-                addLog(tx.sign === '+' ? 'in' : 'out', logMsg);
-            });
-        }
-
-        // Charts Logic
+        // Financial Charting Architecture
         Chart.defaults.color = '#f0f0f0';
-        Chart.defaults.font.family = 'Inter';
+        Chart.defaults.font.family = 'Inter, sans-serif';
 
         function initCharts() {
             const ctxLine = document.getElementById('lineChart').getContext('2d');
             charts.line = new Chart(ctxLine, {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Capital Total (Est. EUR)', data: [], borderColor: '#00ff66', tension: 0.2, backgroundColor: 'rgba(0, 255, 102, 0.1)', fill: true }] },
-                options: { responsive: true, maintainAspectRatio: false }
+                data: { labels: [], datasets: [{ label: 'Capital Total (EUR)', data: [], borderColor: '#00ff66', backgroundColor: 'rgba(0, 255, 102, 0.05)', tension: 0.15, fill: true, pointRadius: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: '#222' } }, y: { grid: { color: '#222' } } } }
             });
 
             const ctxDonut = document.getElementById('donutChart').getContext('2d');
             charts.donut = new Chart(ctxDonut, {
                 type: 'doughnut',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#ff3333', '#00ff66', '#33aaff', '#ffaa00', '#aa33ff', '#ff33aa'], cutout: '70%' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#ff3333', '#00ff66', '#33aaff', '#ffaa00', '#aa33ff', '#ff33aa', '#00ffff'], borderLineWidth: 1, borderColor: '#141414' }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } } }
             });
         }
 
         function updateCharts() {
-            // Line Chart (Capital Growth)
-            let total = 0;
-            const history = [];
+            // 1. Line Chart Calculation (Historical continuous equity curve)
+            let runningTotalEUR = 0;
+            const historyData = [];
             const labels = [];
-            
-            transactions.forEach((tx, index) => {
-                const val = tx.sign === '+' ? tx.valueInEUR : -tx.valueInEUR;
-                total += val;
-                history.push(total);
-                labels.push(`Tx ${index + 1}`);
+
+            // Sort transactions by date to ensure historical alignment
+            transactions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            transactions.forEach((tx, i) => {
+                const delta = tx.sign === '+' ? tx.valueInEUR : -tx.valueInEUR;
+                runningTotalEUR += delta;
+                historyData.push(runningTotalEUR.toFixed(2));
+                labels.push(new Date(tx.timestamp).toLocaleDateString());
             });
 
             charts.line.data.labels = labels;
-            charts.line.data.datasets[0].data = history;
+            charts.line.data.datasets[0].data = historyData;
             charts.line.update();
 
+            // 2. Donut Segment Render
             updateDonut();
         }
 
         function updateDonut() {
             const filter = document.getElementById('donut-filter').value;
-            const dataMap = {};
+            const segments = {};
 
             transactions.forEach(tx => {
                 if (filter === 'expenses' && tx.sign === '-') {
-                    dataMap[tx.category] = (dataMap[tx.category] || 0) + tx.valueInEUR;
+                    segments[tx.category] = (segments[tx.category] || 0) + tx.valueInEUR;
                 } else if (filter === 'incomes' && tx.sign === '+') {
-                    dataMap[tx.category] = (dataMap[tx.category] || 0) + tx.valueInEUR;
+                    segments[tx.category] = (segments[tx.category] || 0) + tx.valueInEUR;
                 } else if (filter === 'sources') {
-                    dataMap[tx.source] = (dataMap[tx.source] || 0) + (tx.sign === '+' ? tx.valueInEUR : -tx.valueInEUR);
+                    const delta = tx.sign === '+' ? tx.valueInEUR : -tx.valueInEUR;
+                    segments[tx.source] = (segments[tx.source] || 0) + delta;
                 }
             });
 
-            charts.donut.data.labels = Object.keys(dataMap);
-            charts.donut.data.datasets[0].data = Object.values(dataMap);
+            charts.donut.data.labels = Object.keys(segments);
+            charts.donut.data.datasets[0].data = Object.values(segments).map(v => Math.max(0, v).toFixed(2));
             charts.donut.update();
         }
 
         async function initApp() {
             initCharts();
-            await fetchPrices();
-            loadLogs();
+            addLog('system', '> Démarrage du noyau de calcul...');
+            await fetchMarketRates();
+            
+            // Render logs sequentially from stored immutable items
+            if (transactions.length === 0) {
+                addLog('system', '> Aucun historique détecté. Prêt pour saisie.');
+            } else {
+                transactions.forEach(tx => renderLogEntry(tx));
+            }
             updateCharts();
         }
     </script>
