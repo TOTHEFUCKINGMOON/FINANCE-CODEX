@@ -208,7 +208,7 @@
 
         body.editing .edit-tool { display: inline-block; }
 
-        /* Architecture des Graphiques */
+        /* Architecture des Graphiques - CORRECTION BUG INFINITE SCROLL */
         .section-title {
             font-size: 1.4rem;
             border-left: 4px solid var(--text-color);
@@ -229,16 +229,19 @@
         }
 
         .chart-box {
-            position: relative;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 340px;
             width: 100%;
         }
 
-        .chart-box canvas {
+        /* Conteneur rigide pour briser la boucle de redimensionnement de Chart.js */
+        .canvas-wrapper {
+            position: relative;
+            height: 320px; 
+            width: 100%;
+        }
+
+        .canvas-wrapper canvas {
             max-width: 100% !important;
             max-height: 100% !important;
         }
@@ -386,10 +389,14 @@
         <div class="section-title stellar-text">Données Globales de Capital</div>
         <div class="charts-grid-global">
             <div class="chart-box">
-                <canvas id="global-growth-chart"></canvas>
+                <div class="canvas-wrapper">
+                    <canvas id="global-growth-chart"></canvas>
+                </div>
             </div>
             <div class="chart-box">
-                <canvas id="global-donut-chart"></canvas>
+                <div class="canvas-wrapper">
+                    <canvas id="global-donut-chart"></canvas>
+                </div>
                 <div class="selector-container">
                     <select id="global-donut-selector" onchange="renderGlobalDonut()">
                         <option value="category">Motifs de Dépenses / Catégories</option>
@@ -407,8 +414,12 @@
                     <select class="sub-filter-selector" onchange="updateSubChartModule(0)"></select>
                 </div>
                 <div class="sub-charts-flex">
-                    <div class="chart-box"><canvas id="sub-growth-0"></canvas></div>
-                    <div class="chart-box"><canvas id="sub-donut-0"></canvas></div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-growth-0"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-donut-0"></canvas></div>
+                    </div>
                 </div>
             </div>
 
@@ -418,8 +429,12 @@
                     <select class="sub-filter-selector" onchange="updateSubChartModule(1)"></select>
                 </div>
                 <div class="sub-charts-flex">
-                    <div class="chart-box"><canvas id="sub-growth-1"></canvas></div>
-                    <div class="chart-box"><canvas id="sub-donut-1"></canvas></div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-growth-1"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-donut-1"></canvas></div>
+                    </div>
                 </div>
             </div>
 
@@ -429,8 +444,12 @@
                     <select class="sub-filter-selector" onchange="updateSubChartModule(2)"></select>
                 </div>
                 <div class="sub-charts-flex">
-                    <div class="chart-box"><canvas id="sub-growth-2"></canvas></div>
-                    <div class="chart-box"><canvas id="sub-donut-2"></canvas></div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-growth-2"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-donut-2"></canvas></div>
+                    </div>
                 </div>
             </div>
 
@@ -440,8 +459,12 @@
                     <select class="sub-filter-selector" onchange="updateSubChartModule(3)"></select>
                 </div>
                 <div class="sub-charts-flex">
-                    <div class="chart-box"><canvas id="sub-growth-3"></canvas></div>
-                    <div class="chart-box"><canvas id="sub-donut-3"></canvas></div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-growth-3"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-donut-3"></canvas></div>
+                    </div>
                 </div>
             </div>
 
@@ -451,8 +474,12 @@
                     <select class="sub-filter-selector" onchange="updateSubChartModule(4)"></select>
                 </div>
                 <div class="sub-charts-flex">
-                    <div class="chart-box"><canvas id="sub-growth-4"></canvas></div>
-                    <div class="chart-box"><canvas id="sub-donut-4"></canvas></div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-growth-4"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="canvas-wrapper"><canvas id="sub-donut-4"></canvas></div>
+                    </div>
                 </div>
             </div>
         </div>
